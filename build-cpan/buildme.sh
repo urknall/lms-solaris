@@ -33,6 +33,8 @@
 #     perlbrew install perl-5.12.4 -D usethreads -A ccflags=-fno-stack-protector -A ldflags=-fno-stack-protector
 #
 
+PATH=/opt/gcc-4.6.3/bin:/usr/bin:$PATH
+
 OS=`uname`
 MACHINE=`uname -m`
 
