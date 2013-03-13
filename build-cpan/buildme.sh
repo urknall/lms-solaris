@@ -26,14 +26,18 @@
 #
 #     for me on omnios the following command did the trick:
 #
+<<<<<<< HEAD
 #     perlbrew install perl-5.12.4 -D usethreads -D use64bitint -A ccflags=-fno-stack-protector -A ldflags=-fno-stack-protector -Dcc=gcc --notest
+=======
+#     perlbrew install perl-5.14.2 -D usethreads -D use64bitint -A ccflags=-fno-stack-protector -A ldflags=-fno-stack-protector -Dcc=gcc --notest
+>>>>>>> Fix compile errors
 #
 #   For 64-bit native systems, use:
 #
 #     perlbrew install perl-5.12.4 -D usethreads -A ccflags=-fno-stack-protector -A ldflags=-fno-stack-protector
 #
 
-PATH=/opt/gcc-4.6.3/bin:/usr/bin:$PATH
+PATH=/opt/gcc-4.6.3/bin:/opt/sunstudio12.1/bin:/usr/bin:$PATH
 
 OS=`uname`
 MACHINE=`uname -m`
@@ -471,7 +475,7 @@ function build {
                 export PERL5LIB=$BASE_514/lib/perl5
 
                 $PERL_514 Makefile.PL INSTALL_BASE=$BASE_514 $2
-                make test
+                make
                 if [ $? != 0 ]; then
                     echo "make test failed, aborting"
                     exit $?
