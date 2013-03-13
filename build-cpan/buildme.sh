@@ -364,7 +364,7 @@ function build {
             build_module DBI-1.616
             RUN_TESTS=1
             
-            # build #ICU, but only if it doesn't exist in the build dir,
+            # build ICU, but only if it doesn't exist in the build dir,
             # because it takes so damn long on slow platforms
             if [ ! -f build/lib/libicudata_s.a ]; then
                 tar zxvf icu4c-4_6-src.tgz
