@@ -26,7 +26,7 @@
 #
 #     for me on omnios the following command did the trick:
 #
-#     perlbrew install perl-5.12.4 -D usethreads -D use64bitint -A ccflags=-fno-stack-protector -A ldflags=-fno-stack-protector -Dcc=gcc --notests
+#     perlbrew install perl-5.12.4 -D usethreads -D use64bitint -A ccflags=-fno-stack-protector -A ldflags=-fno-stack-protector -Dcc=gcc --notest
 #
 #   For 64-bit native systems, use:
 #
