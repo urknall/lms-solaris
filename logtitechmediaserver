@@ -109,9 +109,7 @@ pkg install --deny-new-be rsync
 `tar -xzf perl-$PERLVERSION.tar.gz`;
 `mv perl-$PERLVERSION perl-$PERLVERSION.src`;
 `cd perl-$PERLVERSION.src`;
-`./Configure -d -Dcc=gcc -Dusethreads -Duse64bitint -Dprefix=/opt/perl-$PERLVERSION -Dccflags="-D_REENTRANT \`;
-`-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_TS_ERRNO -D_LARGEFILE64_SOURCE -D_FORTIFY_SOURCE=2 \`;
-`-DPERL_USE_SAFE_PUTENV" -A ldflags=-fno-stack-protector`;
+`./Configure -d -Dcc=gcc -Dusethreads -Duse64bitint -Dprefix=/opt/perl-$PERLVERSION -Dccflags="-D_REENTRANT -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_TS_ERRNO -D_LARGEFILE64_SOURCE -D_FORTIFY_SOURCE=2 -DPERL_USE_SAFE_PUTENV" -A ldflags=-fno-stack-protector`;
 `gmake`;
 `gmake install`;
 `cd /root`;
