@@ -105,118 +105,13 @@ pkg install --deny-new-be rsync
 ## step 1: Install perl
 #############################
 
-# only once
-if (!(-f '/opt/local/etc/proftpd.conf')) {
-         &log1('step 1: install $ver');
-
-         # opt del old
-         if (-f "/opt/local/share/$ver.tar.gz") {
-           `rm /opt/local/share/$ver.tar.gz`;
-         }
-        `wget -P /opt/local/share/ ftp://ftp.proftpd.org/distrib/source/$ver.tar.gz`;
-        $r=`tar -xvf /opt/local/share/$ver.tar.gz -C /opt/local/share/`;
-        print "$r\n\n";
-
-         # remove the original archiv (if you want)
-        `rm /opt/local/share/$ver.tar.gz`;
-
-        print "compile now\n";
-        print "cd /opt/local/share/$ver \n./configure --prefix=/opt/local/ \nmake && make install;\n\nplease wait some minutes..\n";
-
-        # compile
-        $r=`cd /opt/local/share/$ver; ./configure --prefix=/opt/local/; make && make install;`;
-
-        &log1('proftpd log\n$r');
-
-
-        #del sources
-        if (-d "/opt/local/share/$ver") {
-                $t=`rm -r /opt/local/share/$ver`;
-        }
-
-        # create service
-        $r=<<EoF;
-<?xml version="1.0"?>
-<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
-<service_bundle type="manifest" name="proftpd">
-  <service name="pkgsrc/proftpd" type="service" version="1">
-    <create_default_instance enabled='false'/>
-    <single_instance/>
-    <dependency name='network' grouping='require_all' restart_on='error' type='service'>
-      <service_fmri value='svc:/milestone/network:default' />
-    </dependency>
-    <dependency name='filesystem-local' grouping='require_all' restart_on='none' type='service'>
-      <service_fmri value='svc:/system/filesystem/local:default' />
-    </dependency>
-    <dependency name='autofs' grouping='optional_all' restart_on='error' type='service'>
-      <service_fmri value='svc:/system/filesystem/autofs:default' />
-    </dependency>
-    <exec_method type="method" name="start" exec="/opt/local/sbin/proftpd -c %{config_file}" timeout_seconds="60" />
-    <exec_method type="method" name="stop" exec=":kill" timeout_seconds="60" />
-    <exec_method type="method" name="refresh" exec=":kill -HUP" timeout_seconds="60" />
-    <property_group name="startd" type="framework">
-      <propval name="duration" type="astring" value="contract" />
-      <propval name="ignore_error" type="astring" value="core,signal" />
-    </property_group>
-    <property_group name="application" type="application">
-      <propval name="config_file" type="astring" value="/opt/local/etc/proftpd.conf" />
-    </property_group>
-    <stability value="Evolving" />
-    <template>
-      <common_name>
-        <loctext xml:lang="C">ProFTPD FTP daemon</loctext>
-      </common_name>
-    </template>
-  </service>
-</service_bundle>
-
-EoF
-
-   # write to /opt/local/share/smf
-   if (!(-d "/opt/local/share/smf")) { `mkdir /opt/local/share/smf`; }
-   if (!(-d "/opt/local/share/smf/proftpd")) { `mkdir /opt/local/share/smf/proftpd`; }
-
-   open (M, ">/opt/local/share/smf/proftpd/manifest.xml");
-          print M "$r";
-   close (M);
-
-   # load manifest
-          &log1("load manifest /opt/local/share/smf/proftpd/manifest.xml");
-          $r=`svccfg -v import /opt/local/share/smf/proftpd/manifest.xml`;
-          &log2($r);
-
-
-}  else {
-         &log1('step 1: proftpd already installed, rename /opt/local/etc/proftpd.conf to reinstall');
-}
-
-
-
-
-
-
-
-
-
-############### new main action
-sub log1 {
-###############
-    my $t=$_[0];
-    $t="\n\n----------------\n$t\n----------------\n\n";
-    &log2($t);
-  }
-
-############### log and print
-sub log2 {
-###############
-  my $r=`echo \$HOME`;
-  chomp $r;
-      my $t=$_[0];
-      $t=~s/\s+$//gs;
-      $t.="\n";
-      print $t;
-      open (M, ">>$r/proftpd.log");
-          print M "$t\n";
-      close (M);
-  }
-
+`wget http://www.cpan.org/src/5.0/perl-$PERLVERSION.tar.gz`;
+`tar -xzf perl-$PERLVERSION.tar.gz`;
+`mv perl-$PERLVERSION perl-$PERLVERSION.src`;
+`cd perl-$PERLVERSION.src`;
+`./Configure -d -Dcc=gcc -Dusethreads -Duse64bitint -Dprefix=/opt/perl-$PERLVERSION -Dccflags="-D_REENTRANT \
+-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_TS_ERRNO -D_LARGEFILE64_SOURCE -D_FORTIFY_SOURCE=2 \
+-DPERL_USE_SAFE_PUTENV" -A ldflags=-fno-stack-protector`;
+`gmake`;
+`gmake install`;
+`cd /root`;
