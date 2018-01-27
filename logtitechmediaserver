@@ -23,7 +23,7 @@ $NASMVERSION="2.13.02";
      @par=split(/ /,$ant);
      if ($par[3]=~/^11\./i) {
        print "\n"x20;
-       print "This proftpd installer is running on Illumos based systems only.\nOn Solaris 11 use the default Proftpd\n\n";
+       print "This lms installer is running on Illumos based systems only.\n\n";
        exit;
      }
 
@@ -45,11 +45,6 @@ $NASMVERSION="2.13.02";
                       exit;
                }
 
-
-if (-f "$ant/amp.log") {
-  `rm $ant/amp.log`;
-}
-
 ##date
 #######
  ($sec,$min,$hour,$mday,$mon,$year,$wday,$ydat,$isdst) = localtime(time);
@@ -70,11 +65,11 @@ chomp($t);        # remove newline
 
       print "\n"x20;
       print "***************************************************************************\n\n";
-      print "**    Setup napp-it and ProFTPS Server addon Ver. 0.s beta - Jan 2017    **\n";
+      print "**    Setup Nappit Logitechmediaserver Addon - Jan 2017                  **\n";
       print "**    intended for OmniOS and OpenIndiana - not on Solaris 11            **\n\n";
       print "***************************************************************************\n\n";
-      print "** Actions (logfile $t/proftpd.log):                            \n";
-      print "**     Compile ProFTPD $ver                                            **\n";
+      print "** Actions ():                                     \n";
+      print "**                                                 **\n";
       print "***************************************************************************\n\n\n";
       print "*  \n";
       sleep(3);
@@ -91,14 +86,23 @@ print "\n"x40;
 
     # create BE pre setup
     $t=time();
-    `beadm create pre_proftpd_setup_$ver`;
+    `beadm create pre_lms_setup_$LMSVERSION`;
+
+#############################
+## step 1: Install packages
+#############################
 
 
+echo "### Installing needed packages
 
+pkg install --deny-new-be gcc51
+pkg install --deny-new-be gnu-make gnu-tar linker header-math object-file gnu-coreutils lint system/header
+pkg install --deny-new-be git
+pkg install --deny-new-be rsync
 
 
 #############################
-## step 1: Install proftpd
+## step 1: Install perl
 #############################
 
 # only once
