@@ -1,0 +1,215 @@
+#!/usr/bin/perl
+## nappit add-on logitechmediaserver
+## Jan. 2017, install script from urknall
+
+############
+## setup lms (Logitechmediaserver)
+##
+####################################################################################
+#
+#
+####################################################################################
+
+#install release
+$ver="proftpd-1.3.6rc4";
+
+####################
+# not on Solaris  11, included
+####################
+     $ant=`uname -a`;
+     @par=split(/ /,$ant);
+     if ($par[3]=~/^11\./i) {
+       print "\n"x20;
+       print "This proftpd installer is running on Illumos based systems only.\nOn Solaris 11 use the default Proftpd\n\n";
+       exit;
+     }
+
+###############
+### root only !
+###############
+     $ant=`whoami`; chomp $ant;
+     if ($ant ne "root") {
+         print "user $ant not allowed\nlogin as root or su and run setup again!";
+         exit;
+     }
+
+#run from $HOME ie /root
+###############
+               $t=`pwd`;
+               $ant=`echo \$HOME`;
+               if ($t ne $ant){
+                      print "\n\n#####################\nYou must call wget as from your \$HOME-directory.\n Please do a cd /\$HOME and try again.\n\n";
+                      exit;
+               }
+
+
+if (-f "$ant/amp.log") {
+  `rm $ant/amp.log`;
+}
+
+##date
+#######
+ ($sec,$min,$hour,$mday,$mon,$year,$wday,$ydat,$isdst) = localtime(time);
+ $mon++;
+ if ($min < 10)  { $min  = "0$min";  }
+ if ($hour < 10) { $hour = "0$hour"; }
+ if ($mday < 10) { $mday = "0$mday"; }
+ if ($mon < 10)  { $mon  = "0$mon";  }
+ $year=1900+$year;
+
+
+
+##############
+# Startmessage
+##############
+$t=`echo \$HOME`;
+chomp($t);        # remove newline
+
+      print "\n"x20;
+      print "***************************************************************************\n\n";
+      print "**    Setup napp-it and ProFTPS Server addon Ver. 0.s beta - Jan 2017    **\n";
+      print "**    intended for OmniOS and OpenIndiana - not on Solaris 11            **\n\n";
+      print "***************************************************************************\n\n";
+      print "** Actions (logfile $t/proftpd.log):                            \n";
+      print "**     Compile ProFTPD $ver                                            **\n";
+      print "***************************************************************************\n\n\n";
+      print "*  \n";
+      sleep(3);
+      print " 3 \n"; sleep(2);
+      print " 2 \n"; sleep(2);
+      print " 1 \n"; sleep(2);
+
+print "\n"x40;
+
+
+#########################################################
+## step 1. create BE, optionally add path to all commands
+#########################################################
+
+    # create BE pre setup
+    $t=time();
+    `beadm create pre_proftpd_setup_$ver`;
+
+
+
+
+
+#############################
+## step 1: Install proftpd
+#############################
+
+# only once
+if (!(-f '/opt/local/etc/proftpd.conf')) {
+         &log1('step 1: install $ver');
+
+         # opt del old
+         if (-f "/opt/local/share/$ver.tar.gz") {
+           `rm /opt/local/share/$ver.tar.gz`;
+         }
+        `wget -P /opt/local/share/ ftp://ftp.proftpd.org/distrib/source/$ver.tar.gz`;
+        $r=`tar -xvf /opt/local/share/$ver.tar.gz -C /opt/local/share/`;
+        print "$r\n\n";
+
+         # remove the original archiv (if you want)
+        `rm /opt/local/share/$ver.tar.gz`;
+
+        print "compile now\n";
+        print "cd /opt/local/share/$ver \n./configure --prefix=/opt/local/ \nmake && make install;\n\nplease wait some minutes..\n";
+
+        # compile
+        $r=`cd /opt/local/share/$ver; ./configure --prefix=/opt/local/; make && make install;`;
+
+        &log1('proftpd log\n$r');
+
+
+        #del sources
+        if (-d "/opt/local/share/$ver") {
+                $t=`rm -r /opt/local/share/$ver`;
+        }
+
+        # create service
+        $r=<<EoF;
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+<service_bundle type="manifest" name="proftpd">
+  <service name="pkgsrc/proftpd" type="service" version="1">
+    <create_default_instance enabled='false'/>
+    <single_instance/>
+    <dependency name='network' grouping='require_all' restart_on='error' type='service'>
+      <service_fmri value='svc:/milestone/network:default' />
+    </dependency>
+    <dependency name='filesystem-local' grouping='require_all' restart_on='none' type='service'>
+      <service_fmri value='svc:/system/filesystem/local:default' />
+    </dependency>
+    <dependency name='autofs' grouping='optional_all' restart_on='error' type='service'>
+      <service_fmri value='svc:/system/filesystem/autofs:default' />
+    </dependency>
+    <exec_method type="method" name="start" exec="/opt/local/sbin/proftpd -c %{config_file}" timeout_seconds="60" />
+    <exec_method type="method" name="stop" exec=":kill" timeout_seconds="60" />
+    <exec_method type="method" name="refresh" exec=":kill -HUP" timeout_seconds="60" />
+    <property_group name="startd" type="framework">
+      <propval name="duration" type="astring" value="contract" />
+      <propval name="ignore_error" type="astring" value="core,signal" />
+    </property_group>
+    <property_group name="application" type="application">
+      <propval name="config_file" type="astring" value="/opt/local/etc/proftpd.conf" />
+    </property_group>
+    <stability value="Evolving" />
+    <template>
+      <common_name>
+        <loctext xml:lang="C">ProFTPD FTP daemon</loctext>
+      </common_name>
+    </template>
+  </service>
+</service_bundle>
+
+EoF
+
+   # write to /opt/local/share/smf
+   if (!(-d "/opt/local/share/smf")) { `mkdir /opt/local/share/smf`; }
+   if (!(-d "/opt/local/share/smf/proftpd")) { `mkdir /opt/local/share/smf/proftpd`; }
+
+   open (M, ">/opt/local/share/smf/proftpd/manifest.xml");
+          print M "$r";
+   close (M);
+
+   # load manifest
+          &log1("load manifest /opt/local/share/smf/proftpd/manifest.xml");
+          $r=`svccfg -v import /opt/local/share/smf/proftpd/manifest.xml`;
+          &log2($r);
+
+
+}  else {
+         &log1('step 1: proftpd already installed, rename /opt/local/etc/proftpd.conf to reinstall');
+}
+
+
+
+
+
+
+
+
+
+############### new main action
+sub log1 {
+###############
+    my $t=$_[0];
+    $t="\n\n----------------\n$t\n----------------\n\n";
+    &log2($t);
+  }
+
+############### log and print
+sub log2 {
+###############
+  my $r=`echo \$HOME`;
+  chomp $r;
+      my $t=$_[0];
+      $t=~s/\s+$//gs;
+      $t.="\n";
+      print $t;
+      open (M, ">>$r/proftpd.log");
+          print M "$t\n";
+      close (M);
+  }
+
