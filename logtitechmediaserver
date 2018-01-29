@@ -105,6 +105,8 @@ pkg install --deny-new-be rsync
 ## step 1: Install perl
 #############################
 
+echo "### Building perl
+
 `wget http://www.cpan.org/src/5.0/perl-$PERLVERSION.tar.gz`;
 `tar -xzf perl-$PERLVERSION.tar.gz`;
 `mv perl-$PERLVERSION perl-$PERLVERSION.src`;
